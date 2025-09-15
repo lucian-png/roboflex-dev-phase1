@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://dev.roboflex.co/$1",
+      "permanent": true
+    }
+  ]
+}
