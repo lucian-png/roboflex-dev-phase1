@@ -2,15 +2,15 @@ import SEO from '../components/SEO';
 import NavbarAuth from '../components/layout/NavbarAuth';
 import FooterMinimal from '../components/layout/FooterMinimal';
 
-export default function AdminPage() {
+export default function OwnerPortal() {
   return (
     <>
-      <SEO title="Roboflex Admin Panel" description="View and manage applications." />
+      <SEO title="Roboflex Owner Portal" description="Private portal for verified Roboflex owners." />
       <NavbarAuth />
       <main style={{ padding: '2rem', minHeight: '80vh' }}>
-        <h1>Admin Panel (Phase 1 Placeholder)</h1>
+        <h1>Owner Portal (Phase 1 Placeholder)</h1>
         <p>
-          Interface to review and manage applications. Expand with search, filter, and CSV export.
+          Concierge contact, events, private downloads for owners.
         </p>
       </main>
       <FooterMinimal />

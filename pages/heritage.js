@@ -2,15 +2,15 @@ import SEO from '../components/SEO';
 import NavbarAuth from '../components/layout/NavbarAuth';
 import FooterMinimal from '../components/layout/FooterMinimal';
 
-export default function AdminPage() {
+export default function HeritagePage() {
   return (
     <>
-      <SEO title="Roboflex Admin Panel" description="View and manage applications." />
+      <SEO pageKey="heritage" />
       <NavbarAuth />
       <main style={{ padding: '2rem', minHeight: '80vh' }}>
-        <h1>Admin Panel (Phase 1 Placeholder)</h1>
+        <h1>Heritage Page (Phase 1 Placeholder)</h1>
         <p>
-          Interface to review and manage applications. Expand with search, filter, and CSV export.
+          Timeline and image archive for authenticated users. Includes Timeline and ImageGallery components.
         </p>
       </main>
       <FooterMinimal />

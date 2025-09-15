@@ -2,16 +2,15 @@ import SEO from '../components/SEO';
 import NavbarMinimal from '../components/layout/NavbarMinimal';
 import FooterMinimal from '../components/layout/FooterMinimal';
 
-export default function LandingPage() {
+export default function ApplicationPage() {
   return (
     <>
-      <SEO pageKey="landing" />
+      <SEO pageKey="application" />
       <NavbarMinimal />
       <main style={{ padding: '2rem', minHeight: '80vh' }}>
-        <h1>Landing Page (Phase 1 Placeholder)</h1>
+        <h1>Application Page (Phase 1 Placeholder)</h1>
         <p>
-          New cinematic landing page coming soon — HeroSection, ScrollRevealSection,
-          SocialProofCarousel, ScarcityBanner.
+          Multi-step application form will go here. Integrated with Supabase to store submissions.
         </p>
       </main>
       <FooterMinimal />
