@@ -1,0 +1,14 @@
+# Divergent files — force manual merge
+package.json     merge=manual
+package-lock.json merge=manual
+.env.local       merge=manual
+pages/_app.js    merge=manual
+components/SEO.js merge=manual
+config/seo.js    merge=manual
+styles/globals.css merge=manual
+pages/index.js   merge=manual
+pages/apply.js   merge=manual
+pages/admin.js   merge=manual
+components/layout/* merge=manual
+pages/api/*      merge=manual
+utils/*          merge=manual
