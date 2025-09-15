@@ -16,17 +16,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  console.log("Request body:", req.body);
-  const { name, email, message } = req.body;
+  const { name, email, phone, occupation, country, message } = req.body;
 
-  if (!name || !email) {
+  // ✅ Server-side validation: all fields required
+  if (!name || !email || !phone || !occupation || !country || !message) {
     console.log("Validation failed — missing fields");
-    return res.status(400).json({ error: 'Name and Email are required' });
+    return res.status(400).json({ error: 'All fields are required' });
   }
 
   const { data, error } = await supabase
     .from('applications')
-    .insert([{ name, email, message }])
+    .insert([
+      { name, email, phone, occupation, country, message }
+    ])
     .select();
 
   console.log("Insert result:", { data, error });

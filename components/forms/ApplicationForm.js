@@ -60,41 +60,84 @@ export default function ApplicationForm() {
 
   const renderStep = () => {
     switch (step) {
-      case 1:
-        return (
-          <>
-            <label>
-              Full Name:<br />
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </label>
-            <label>
-              Email:<br />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </label>
-            <label>
-              Phone:<br />
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </label>
-          </>
-        );
-      case 2:
+// ... inside renderStep()
+  case 1:
+    return (
+      <>
+        <label>
+          Full Name:<br />
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </label>
+        <label>
+          Email:<br />
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </label>
+        <label>
+          Phone:<br />
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+          />
+        </label>
+      </>
+    );
+    
+case 2:
+  return (
+    <>
+      <label>
+        Occupation:<br />
+        <input
+          type="text"
+          name="occupation"
+          value={formData.occupation}
+          onChange={handleChange}
+          required
+        />
+      </label>
+      <label>
+        Country:<br />
+        <input
+          type="text"
+          name="country"
+          value={formData.country}
+          onChange={handleChange}
+          required
+        />
+      </label>
+    </>
+  );
+
+case 3:
+  return (
+    <>
+      <label>
+        Your Message:<br />
+        <textarea
+          name="message"
+          rows="4"
+          value={formData.message}
+          onChange={handleChange}
+          required
+        />
+      </label>
+    </>
+  );      case 2:
         return (
           <>
             <label>
