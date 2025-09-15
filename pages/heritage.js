@@ -1,18 +1,19 @@
 import SEO from '../components/SEO';
 import NavbarAuth from '../components/layout/NavbarAuth';
 import FooterMinimal from '../components/layout/FooterMinimal';
+import HeritageGateWrapper from '../components/gated/HeritageGateWrapper';
+import HeritageHero from '../components/heritage/HeritageHero';
+import HeritageDetailsSection from '../components/heritage/HeritageDetailsSection';
 
 export default function HeritagePage() {
   return (
     <>
       <SEO pageKey="heritage" />
       <NavbarAuth />
-      <main style={{ padding: '2rem', minHeight: '80vh' }}>
-        <h1>Heritage Page (Phase 1 Placeholder)</h1>
-        <p>
-          Timeline and image archive for authenticated users. Includes Timeline and ImageGallery components.
-        </p>
-      </main>
+      <HeritageGateWrapper>
+        <HeritageHero />
+        <HeritageDetailsSection />
+      </HeritageGateWrapper>
       <FooterMinimal />
     </>
   );
