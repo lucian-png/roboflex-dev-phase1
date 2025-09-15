@@ -1,18 +1,22 @@
 import SEO from '../components/SEO';
 import NavbarAuth from '../components/layout/NavbarAuth';
 import FooterMinimal from '../components/layout/FooterMinimal';
+import SecureGateWrapper from '../components/gated/SecureGateWrapper';
+import OwnerHero from '../components/owner/OwnerHero';
+import OwnerContentSection from '../components/owner/OwnerContentSection';
 
-export default function OwnerPortal() {
+export default function OwnerPage() {
   return (
     <>
-      <SEO title="Roboflex Owner Portal" description="Private portal for verified Roboflex owners." />
+      <SEO 
+        title="Roboflex Owner Portal" 
+        description="Secure access to exclusive Roboflex owner resources and concierge services." 
+      />
       <NavbarAuth />
-      <main style={{ padding: '2rem', minHeight: '80vh' }}>
-        <h1>Owner Portal (Phase 1 Placeholder)</h1>
-        <p>
-          Concierge contact, events, private downloads for owners.
-        </p>
-      </main>
+      <SecureGateWrapper contentKey="owner">
+        <OwnerHero />
+        <OwnerContentSection />
+      </SecureGateWrapper>
       <FooterMinimal />
     </>
   );
