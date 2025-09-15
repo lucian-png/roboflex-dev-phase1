@@ -1,3 +1,5 @@
+// ... test file with arrow heads
+
 import { useState } from 'react';
 
 export default function AdminPage() {
@@ -79,6 +81,11 @@ export default function AdminPage() {
     }
   };
 
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
+  };
+
   if (!authed) {
     return (
       <div style={{ padding: '2rem', color: 'white', background: 'black', minHeight: '100vh' }}>
@@ -122,13 +129,13 @@ export default function AdminPage() {
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th style={th} onClick={() => handleSort('name')}>Name</th>
-            <th style={th} onClick={() => handleSort('email')}>Email</th>
-            <th style={th} onClick={() => handleSort('phone')}>Phone</th>
-            <th style={th} onClick={() => handleSort('occupation')}>Occupation</th>
-            <th style={th} onClick={() => handleSort('country')}>Country</th>
-            <th style={th} onClick={() => handleSort('message')}>Message</th>
-            <th style={th} onClick={() => handleSort('submitted_at')}>Submitted At</th>
+            <th style={th} onClick={() => handleSort('name')}>Name{getSortIcon('name')}</th>
+            <th style={th} onClick={() => handleSort('email')}>Email{getSortIcon('email')}</th>
+            <th style={th} onClick={() => handleSort('phone')}>Phone{getSortIcon('phone')}</th>
+            <th style={th} onClick={() => handleSort('occupation')}>Occupation{getSortIcon('occupation')}</th>
+            <th style={th} onClick={() => handleSort('country')}>Country{getSortIcon('country')}</th>
+            <th style={th} onClick={() => handleSort('message')}>Message{getSortIcon('message')}</th>
+            <th style={th} onClick={() => handleSort('submitted_at')}>Submitted At{getSortIcon('submitted_at')}</th>
           </tr>
         </thead>
         <tbody>
