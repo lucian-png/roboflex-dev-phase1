@@ -26,16 +26,21 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Error fetching data' });
   }
 
-  // Create CSV content
-  const header = ['Name', 'Email', 'Message', 'Submitted At'];
-  const rows = data.map((row) => [
-    row.name,
-    row.email,
+  // ✅ Updated CSV header to include all new fields
+  const header = ['Name', 'Email', 'Phone', 'Occupation', 'Country', 'Message', 'Submitted At'];
+
+  const rows = data.map(row => [
+    row.name || '',
+    row.email || '',
+    row.phone || '',
+    row.occupation || '',
+    row.country || '',
     row.message || '',
-    row.submitted_at
+    row.submitted_at || ''
   ]);
+
   const csvContent = [header, ...rows]
-    .map((e) => e.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
   res.setHeader('Content-Type', 'text/csv;charset=utf-8');
