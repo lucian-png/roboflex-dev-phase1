@@ -5,7 +5,7 @@ import HeroSection from '../components/landing/HeroSection';
 import ScrollRevealSection from '../components/landing/ScrollRevealSection';
 import SocialProofCarousel from '../components/landing/SocialProofCarousel';
 import ScarcityBanner from '../components/landing/ScarcityBanner';
-
+  // test comment
 export default function LandingPage() {
   return (
     <>
