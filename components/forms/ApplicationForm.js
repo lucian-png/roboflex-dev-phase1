@@ -1,33 +1,28 @@
 import { useState } from 'react';
 
 export default function ApplicationForm() {
-  // Track which step the user is on
   const [step, setStep] = useState(1);
 
-  // Form field values
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    message: '',
     occupation: '',
     country: '',
+    message: ''
   });
 
-  // Track loading & error states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Generic change handler
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.value
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -37,7 +32,7 @@ export default function ApplicationForm() {
       const res = await fetch('/api/submit-application', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       const data = await res.json();
@@ -48,9 +43,9 @@ export default function ApplicationForm() {
           name: '',
           email: '',
           phone: '',
-          message: '',
           occupation: '',
           country: '',
+          message: ''
         });
       } else {
         throw new Error(data.error || 'Unknown error occurred');
@@ -63,7 +58,6 @@ export default function ApplicationForm() {
     }
   };
 
-  // Render each step
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -142,7 +136,6 @@ export default function ApplicationForm() {
     }
   };
 
-  // Show confirmation after success
   if (success) {
     return (
       <div style={{ marginTop: '2rem', color: 'green' }}>
