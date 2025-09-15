@@ -92,7 +92,7 @@ export default function TechnologyPrinciples() {
       </section>
 
       <section className={styles.section}>
-        <h3>From NASA Heritage to Pentagon Secret to Private Ownership</h3>
+        <h3>From NASA Heritage to the Pentagon to Private Ownership</h3>
         <p>
           Crafted with aerospace‑grade alloys and precision components. Originally
           engineered for astronauts and high‑G military pilots. Exclusive limited
