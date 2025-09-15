@@ -2,6 +2,12 @@
   "redirects": [
     {
       "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "roboflex-dev-phase1.vercel.app"
+        }
+      ],
       "destination": "https://dev.roboflex.co/$1",
       "permanent": true
     }
