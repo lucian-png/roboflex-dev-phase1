@@ -1,7 +1,7 @@
 import SEO from '../components/SEO';
 import NavbarAuth from '../components/layout/NavbarAuth';
 import FooterMinimal from '../components/layout/FooterMinimal';
-import GateWrapper from '../components/gated/GateWrapper';
+import SecureGateWrapper from '../components/gated/SecureGateWrapper';
 import TechnologyHero from '../components/tech/TechnologyHero';
 import TechDetailsSection from '../components/tech/TechDetailsSection';
 
@@ -10,10 +10,10 @@ export default function TechnologyPage() {
     <>
       <SEO pageKey="technology" />
       <NavbarAuth />
-      <GateWrapper>
+      <SecureGateWrapper contentKey="technology">
         <TechnologyHero />
         <TechDetailsSection />
-      </GateWrapper>
+      </SecureGateWrapper>
       <FooterMinimal />
     </>
   );
