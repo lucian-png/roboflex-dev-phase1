@@ -10,7 +10,7 @@ function AdminPage() {
       <SEO pageKey="admin" />
       <Navbar />
       <main>
-        <AdminPageComponent /> 
+        <AdminPageComponent />
       </main>
       <FooterMinimal />
     </>
