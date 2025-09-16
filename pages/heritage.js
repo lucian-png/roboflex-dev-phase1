@@ -1,20 +1,23 @@
+import withRole from '../lib/withRole';
+import Navbar from '../components/layout/Navbar';
+
 import SEO from '../components/SEO';
-import NavbarAuth from '../components/layout/NavbarAuth';
 import FooterMinimal from '../components/layout/FooterMinimal';
-import SecureGateWrapper from '../components/gated/SecureGateWrapper';
 import HeritageHero from '../components/heritage/HeritageHero';
 import HeritageDetailsSection from '../components/heritage/HeritageDetailsSection';
 
-export default function HeritagePage() {
+function HeritagePage() {
   return (
     <>
       <SEO pageKey="heritage" />
-      <NavbarAuth />
-      <SecureGateWrapper contentKey="heritage">
+      <Navbar />
+      <main>
         <HeritageHero />
         <HeritageDetailsSection />
-      </SecureGateWrapper>
+      </main>
       <FooterMinimal />
     </>
   );
 }
+
+export default withRole(HeritagePage, ['admin', 'owner']);

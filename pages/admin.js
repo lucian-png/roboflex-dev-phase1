@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import withRole from '../lib/withRole';
+import Navbar from '../components/layout/Navbar';
+import AdminPageComponent from '../components/AdminPage';
 
-export default function AdminPage() {
-  const [password, setPassword] = useState('');
-  const [submissions, setSubmissions] = useState([]);
-  const [conciergeRequests, setConciergeRequests] = useState([]);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [authed, setAuthed] = useState(false);
+function AdminPageWrapper() {
+  return (
+    <>
+      <Navbar />
+      <AdminPageComponent />
+    </>
+  );
+}
+
+export default withRole(AdminPageWrapper, ['admin']);
 
   // ===== Highlight matching text =====
   const highlightMatch = (text, term) => {

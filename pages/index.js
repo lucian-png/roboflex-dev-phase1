@@ -1,16 +1,16 @@
 import SEO from '../components/SEO';
-import NavbarMinimal from '../components/layout/NavbarMinimal';
+import Navbar from '../components/layout/Navbar';
 import FooterMinimal from '../components/layout/FooterMinimal';
 import HeroSection from '../components/landing/HeroSection';
 import ScrollRevealSection from '../components/landing/ScrollRevealSection';
 import SocialProofCarousel from '../components/landing/SocialProofCarousel';
 import ScarcityBanner from '../components/landing/ScarcityBanner';
-  // test comment
+
 export default function LandingPage() {
   return (
     <>
       <SEO pageKey="landing" />
-      <NavbarMinimal />
+      <Navbar />
       <main>
         <HeroSection />
         <ScrollRevealSection />

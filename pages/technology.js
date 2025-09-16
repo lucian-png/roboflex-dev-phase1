@@ -1,20 +1,23 @@
+import withRole from '../lib/withRole';
+import Navbar from '../components/layout/Navbar';
+
 import SEO from '../components/SEO';
-import NavbarAuth from '../components/layout/NavbarAuth';
 import FooterMinimal from '../components/layout/FooterMinimal';
-import SecureGateWrapper from '../components/gated/SecureGateWrapper';
 import TechnologyHero from '../components/tech/TechnologyHero';
 import TechDetailsSection from '../components/tech/TechDetailsSection';
 
-export default function TechnologyPage() {
+function TechnologyPage() {
   return (
     <>
       <SEO pageKey="technology" />
-      <NavbarAuth />
-      <SecureGateWrapper contentKey="technology">
+      <Navbar />
+      <main>
         <TechnologyHero />
         <TechDetailsSection />
-      </SecureGateWrapper>
+      </main>
       <FooterMinimal />
     </>
   );
 }
+
+export default withRole(TechnologyPage, ['admin', 'owner']);

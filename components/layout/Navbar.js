@@ -2,7 +2,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
-export default function NavbarMinimal() {
+export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState(null);
 
@@ -13,7 +13,7 @@ export default function NavbarMinimal() {
     };
     getUser();
 
-    // Optional: listen for login/logout events to update UI instantly
+    // Listen for login/logout changes and update state immediately
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -41,11 +41,16 @@ export default function NavbarMinimal() {
       background: '#111',
       color: 'white'
     }}>
-      <div style={{ fontWeight: 'bold', cursor: 'pointer' }} onClick={() => router.push('/')}>
+      <div
+        style={{ fontWeight: 'bold', cursor: 'pointer' }}
+        onClick={() => router.push('/')}
+      >
         Roboflex
       </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {user && <span>{user.email}</span>}
+
         {user ? (
           <button
             onClick={handleLogout}
