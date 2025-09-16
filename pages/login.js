@@ -23,10 +23,7 @@ export default function LoginPage() {
         email,
         password,
         options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_SITE_URL
-              ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirmed`
-              : 'https://dev.roboflex.co/auth/confirmed'
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirmed`
         }
       });
       authError = error;
