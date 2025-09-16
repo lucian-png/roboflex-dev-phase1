@@ -21,19 +21,26 @@ export default function ConciergeForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess(false);
 
     try {
-      // Placeholder: currently logs data, later will call API route
-      console.log('Concierge Request Submitted:', formData);
+      const res = await fetch('/api/concierge-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
 
-      // Simulate async action
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await res.json();
 
-      setSuccess(true);
-      setFormData({ name: '', email: '', request: '' });
+      if (res.ok && data.success) {
+        setSuccess(true);
+        setFormData({ name: '', email: '', request: '' });
+      } else {
+        setError(data.error || 'Failed to send request');
+      }
     } catch (err) {
       console.error(err);
-      setError('Failed to send request. Please try again later.');
+      setError('Server error. Please try again.');
     } finally {
       setLoading(false);
     }
