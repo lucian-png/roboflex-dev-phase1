@@ -1,5 +1,3 @@
-// ... test file 4 for deploy
-
 import { useState } from 'react';
 
 export default function AdminPage() {
@@ -8,6 +6,7 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [conciergeRequests, setConciergeRequests] = useState([]); // ✅ NEW
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({
@@ -38,20 +37,40 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
 
-    const res = await fetch('/api/admin-get-submissions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password })
-    });
+    try {
+      // Fetch applications
+      const res = await fetch('/api/admin-get-submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
+      setLoading(false);
 
-    if (res.ok) {
-      setSubmissions(data.submissions);
-      setAuthed(true);
-    } else {
-      setError(data.error || 'Login failed');
+      if (res.ok) {
+        setSubmissions(data.submissions);
+        setAuthed(true);
+
+        // ✅ Fetch concierge requests
+        const resConcierge = await fetch('/api/admin-get-concierge-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const conciergeData = await resConcierge.json();
+        if (resConcierge.ok) {
+          setConciergeRequests(conciergeData.requests);
+        } else {
+          console.error('Error fetching concierge requests:', conciergeData.error);
+        }
+      } else {
+        setError(data.error || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Server error. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -109,6 +128,7 @@ export default function AdminPage() {
 
   return (
     <div style={{ padding: '2rem', color: 'white', background: 'black', minHeight: '100vh' }}>
+      {/* Applications Section */}
       <h2>
         Applications{' '}
         <button
@@ -147,6 +167,33 @@ export default function AdminPage() {
               <td style={td}>{row.occupation}</td>
               <td style={td}>{row.country}</td>
               <td style={td}>{row.message}</td>
+              <td style={td}>
+                {row.submitted_at
+                  ? new Date(row.submitted_at).toLocaleString()
+                  : ''}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Concierge Requests Section */}
+      <h2 style={{ marginTop: '3rem' }}>Concierge Requests</h2>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={th}>Name</th>
+            <th style={th}>Email</th>
+            <th style={th}>Request</th>
+            <th style={th}>Submitted At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {conciergeRequests.map((row) => (
+            <tr key={row.id}>
+              <td style={td}>{row.name}</td>
+              <td style={td}>{row.email}</td>
+              <td style={td}>{row.request}</td>
               <td style={td}>
                 {row.submitted_at
                   ? new Date(row.submitted_at).toLocaleString()
