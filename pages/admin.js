@@ -126,6 +126,32 @@ export default function AdminPage() {
     }
   };
 
+  const downloadCombinedCSV = async () => {
+    try {
+      const res = await fetch('/api/admin-export-combined', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (!res.ok) {
+      throw new Error('Failed to download Combined CSV');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'all_leads.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      alert('Error downloading Combined CSV');
+      console.error(err);
+    }
+  };
+
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return null;
     return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
@@ -170,6 +196,32 @@ export default function AdminPage() {
         >
           Download CSV
         </button>
+        <button
+          onClick={downloadConciergeCSV}
+          style={{
+            marginLeft: '1rem',
+            padding: '0.5rem 1rem',
+            background: '#003366',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Download CSV
+        </button>
+        <button
+          onClick={downloadCombinedCSV}
+          style={{
+            marginLeft: '1rem',
+            padding: '0.5rem 1rem',
+            background: '#660000',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Download Combined CSV
+        </button>
       </h2>
 
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -206,19 +258,6 @@ export default function AdminPage() {
       {/* Concierge Requests Section */}
         <h2 style={{ marginTop: '3rem' }}>
           Concierge Requests{' '}
-          <button
-            onClick={downloadConciergeCSV}
-            style={{
-              marginLeft: '1rem',
-              padding: '0.5rem 1rem',
-              background: '#003366',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            Download CSV
-          </button>
         </h2>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
