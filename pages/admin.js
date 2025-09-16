@@ -100,6 +100,32 @@ export default function AdminPage() {
     }
   };
 
+  const downloadConciergeCSV = async () => {
+    try {
+      const res = await fetch('/api/admin-export-concierge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to download CSV');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'concierge_requests.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      alert('Error downloading Concierge Requests CSV');
+      console.error(err);
+    }
+  };
+
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return null;
     return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
@@ -178,7 +204,22 @@ export default function AdminPage() {
       </table>
 
       {/* Concierge Requests Section */}
-      <h2 style={{ marginTop: '3rem' }}>Concierge Requests</h2>
+        <h2 style={{ marginTop: '3rem' }}>
+          Concierge Requests{' '}
+          <button
+            onClick={downloadConciergeCSV}
+            style={{
+              marginLeft: '1rem',
+              padding: '0.5rem 1rem',
+              background: '#003366',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            Download CSV
+          </button>
+        </h2>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
