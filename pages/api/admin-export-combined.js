@@ -20,20 +20,49 @@ export default async function handler(req, res) {
     // Fetch Applications
     const { data: applications, error: appError } = await supabase
       .from('applications')
-      .select('*')
-      .order('submitted_at', { ascending: false });
+      .select('*');
 
     if (appError) throw appError;
 
     // Fetch Concierge Requests
     const { data: concierge, error: concError } = await supabase
       .from('concierge_requests')
-      .select('*')
-      .order('submitted_at', { ascending: false });
+      .select('*');
 
     if (concError) throw concError;
 
-    // CSV Header (consistent across both types)
+    // Map Applications to unified format
+    const appRows = applications.map(row => ({
+      source: 'Application',
+      name: row.name || '',
+      email: row.email || '',
+      phone: row.phone || '',
+      occupation: row.occupation || '',
+      country: row.country || '',
+      message: row.message || '',
+      request: '',
+      submitted_at: row.submitted_at || ''
+    }));
+
+    // Map Concierge Requests to unified format
+    const concRows = concierge.map(row => ({
+      source: 'Concierge',
+      name: row.name || '',
+      email: row.email || '',
+      phone: '',
+      occupation: '',
+      country: '',
+      message: '',
+      request: row.request || '',
+      submitted_at: row.submitted_at || ''
+    }));
+
+    // Merge & sort by submitted_at (descending: newest first)
+    const allRows = [...appRows, ...concRows].sort((a, b) => {
+      return new Date(b.submitted_at) - new Date(a.submitted_at);
+    });
+
+    // CSV Header
     const header = [
       'Source',
       'Name',
@@ -46,35 +75,20 @@ export default async function handler(req, res) {
       'Submitted At'
     ];
 
-    // Format Application rows
-    const appRows = applications.map(row => [
-      'Application',
-      row.name || '',
-      row.email || '',
-      row.phone || '',
-      row.occupation || '',
-      row.country || '',
-      row.message || '',
-      '', // Request is concierge-only
-      row.submitted_at || ''
-    ]);
-
-    // Format Concierge rows
-    const concRows = concierge.map(row => [
-      'Concierge',
-      row.name || '',
-      row.email || '',
-      '', // Phone not in concierge form
-      '', // Occupation not in concierge form
-      '', // Country not in concierge form
-      '', // Message not in concierge form
-      row.request || '',
-      row.submitted_at || ''
-    ]);
-
-    const allRows = [...appRows, ...concRows];
-
-    const csvContent = [header, ...allRows]
+    const csvContent = [
+      header,
+      ...allRows.map(row => [
+        row.source,
+        row.name,
+        row.email,
+        row.phone,
+        row.occupation,
+        row.country,
+        row.message,
+        row.request,
+        row.submitted_at
+      ])
+    ]
       .map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
 
