@@ -3,10 +3,10 @@ import { useState } from 'react';
 export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [submissions, setSubmissions] = useState([]);
+  const [conciergeRequests, setConciergeRequests] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [authed, setAuthed] = useState(false);
-  const [conciergeRequests, setConciergeRequests] = useState([]);
 
   // ===== Highlight matches =====
   const highlightMatch = (text, term) => {
@@ -16,7 +16,7 @@ export default function AdminPage() {
       regex.test(part) ? (
         <mark
           key={i}
-          style={{ backgroundColor: 'yellow', color: 'black', padding: '0' }}
+          style={{ backgroundColor: 'yellow', color: 'black', padding: 0 }}
         >
           {part}
         </mark>
@@ -26,145 +26,237 @@ export default function AdminPage() {
     );
   };
 
+  // ===== Helper: Cycle sort states =====
+  const cycleSort = (config, setConfig, key) => {
+    if (config.key === key) {
+      if (config.direction === null) {
+        setConfig({ key, direction: 'asc' });
+      } else if (config.direction === 'asc') {
+        setConfig({ key, direction: 'desc' });
+      } else {
+        setConfig({ key: null, direction: null }); // reset
+      }
+    } else {
+      setConfig({ key, direction: 'asc' });
+    }
+  };
+
+  const getSortIcon = (config, key) => {
+    if (config.key !== key || config.direction === null) {
+      return <span style={{ color: '#aaa' }}> ↕</span>;
+    }
+    return (
+      <span style={{ color: '#FFD700' }}>
+        {config.direction === 'asc' ? ' ▲' : ' ▼'}
+      </span>
+    );
+  };
+
   // ===== All Leads Combined =====
   const combinedLeads = [
-    ...submissions.map(row => ({
+    ...submissions.map(r => ({
       source: 'Application',
-      name: row.name,
-      email: row.email,
-      phone: row.phone,
-      occupation: row.occupation,
-      country: row.country,
-      message: row.message,
+      name: r.name,
+      email: r.email,
+      phone: r.phone,
+      occupation: r.occupation,
+      country: r.country,
+      message: r.message,
       request: '',
-      submitted_at: row.submitted_at
+      submitted_at: r.submitted_at
     })),
-    ...conciergeRequests.map(row => ({
+    ...conciergeRequests.map(r => ({
       source: 'Concierge',
-      name: row.name,
-      email: row.email,
+      name: r.name,
+      email: r.email,
       phone: '',
       occupation: '',
       country: '',
       message: '',
-      request: row.request,
-      submitted_at: row.submitted_at
+      request: r.request,
+      submitted_at: r.submitted_at
     }))
   ];
-
-  const [sortConfigCombined, setSortConfigCombined] = useState({ key: null, direction: null });
-  const [searchTermCombined, setSearchTermCombined] = useState('');
-
-  const handleSortCombined = (key) => {
-    if (sortConfigCombined.key === key) {
-      if (sortConfigCombined.direction === null) {
-        setSortConfigCombined({ key, direction: 'asc' });
-      } else if (sortConfigCombined.direction === 'asc') {
-        setSortConfigCombined({ key, direction: 'desc' });
-      } else {
-        setSortConfigCombined({ key: null, direction: null });
-      }
-    } else {
-      setSortConfigCombined({ key, direction: 'asc' });
-    }
-  };
-
-  const sortedCombined = sortConfigCombined.key
+  const [sortCombined, setSortCombined] = useState({ key: null, direction: null });
+  const [searchCombined, setSearchCombined] = useState('');
+  const sortedCombined = sortCombined.key
     ? [...combinedLeads].sort((a, b) => {
-        if (a[sortConfigCombined.key] < b[sortConfigCombined.key]) return sortConfigCombined.direction === 'asc' ? -1 : 1;
-        if (a[sortConfigCombined.key] > b[sortConfigCombined.key]) return sortConfigCombined.direction === 'asc' ? 1 : -1;
+        if (a[sortCombined.key] < b[sortCombined.key]) return sortCombined.direction === 'asc' ? -1 : 1;
+        if (a[sortCombined.key] > b[sortCombined.key]) return sortCombined.direction === 'asc' ? 1 : -1;
         return 0;
       })
     : [...combinedLeads].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-
   const filteredCombined = sortedCombined.filter(row => {
-    const term = searchTermCombined.toLowerCase();
-    return (
-      row.source.toLowerCase().includes(term) ||
-      (row.name && row.name.toLowerCase().includes(term)) ||
-      (row.email && row.email.toLowerCase().includes(term)) ||
-      (row.phone && row.phone.toLowerCase().includes(term)) ||
-      (row.occupation && row.occupation.toLowerCase().includes(term)) ||
-      (row.country && row.country.toLowerCase().includes(term)) ||
-      (row.message && row.message.toLowerCase().includes(term)) ||
-      (row.request && row.request.toLowerCase().includes(term))
-    );
+    const t = searchCombined.toLowerCase();
+    return Object.values(row).some(val => val && val.toString().toLowerCase().includes(t));
   });
 
   // ===== Applications =====
-  const [sortConfigApps, setSortConfigApps] = useState({ key: null, direction: null });
-  const [searchTermApps, setSearchTermApps] = useState('');
-
-  const handleSortApps = (key) => {
-    if (sortConfigApps.key === key) {
-      if (sortConfigApps.direction === null) {
-        setSortConfigApps({ key, direction: 'asc' });
-      } else if (sortConfigApps.direction === 'asc') {
-        setSortConfigApps({ key, direction: 'desc' });
-      } else {
-        setSortConfigApps({ key: null, direction: null });
-      }
-    } else {
-      setSortConfigApps({ key, direction: 'asc' });
-    }
-  };
-
-  const sortedApps = sortConfigApps.key
+  const [sortApps, setSortApps] = useState({ key: null, direction: null });
+  const [searchApps, setSearchApps] = useState('');
+  const sortedApps = sortApps.key
     ? [...submissions].sort((a, b) => {
-        if (a[sortConfigApps.key] < b[sortConfigApps.key]) return sortConfigApps.direction === 'asc' ? -1 : 1;
-        if (a[sortConfigApps.key] > b[sortConfigApps.key]) return sortConfigApps.direction === 'asc' ? 1 : -1;
+        if (a[sortApps.key] < b[sortApps.key]) return sortApps.direction === 'asc' ? -1 : 1;
+        if (a[sortApps.key] > b[sortApps.key]) return sortApps.direction === 'asc' ? 1 : -1;
         return 0;
       })
     : [...submissions].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-
   const filteredApps = sortedApps.filter(row => {
-    const term = searchTermApps.toLowerCase();
-    return (
-      row.name.toLowerCase().includes(term) ||
-      row.email.toLowerCase().includes(term) ||
-      (row.phone && row.phone.toLowerCase().includes(term)) ||
-      (row.occupation && row.occupation.toLowerCase().includes(term)) ||
-      (row.country && row.country.toLowerCase().includes(term)) ||
-      (row.message && row.message.toLowerCase().includes(term))
-    );
+    const t = searchApps.toLowerCase();
+    return Object.values(row).some(val => val && val.toString().toLowerCase().includes(t));
   });
 
   // ===== Concierge =====
-  const [sortConfigConc, setSortConfigConc] = useState({ key: null, direction: null });
-  const [searchTermConc, setSearchTermConc] = useState('');
-
-  const handleSortConc = (key) => {
-    if (sortConfigConc.key === key) {
-      if (sortConfigConc.direction === null) {
-        setSortConfigConc({ key, direction: 'asc' });
-      } else if (sortConfigConc.direction === 'asc') {
-        setSortConfigConc({ key, direction: 'desc' });
-      } else {
-        setSortConfigConc({ key: null, direction: null });
-      }
-    } else {
-      setSortConfigConc({ key, direction: 'asc' });
-    }
-  };
-
-  const sortedConc = sortConfigConc.key
+  const [sortConc, setSortConc] = useState({ key: null, direction: null });
+  const [searchConc, setSearchConc] = useState('');
+  const sortedConc = sortConc.key
     ? [...conciergeRequests].sort((a, b) => {
-        if (a[sortConfigConc.key] < b[sortConfigConc.key]) return sortConfigConc.direction === 'asc' ? -1 : 1;
-        if (a[sortConfigConc.key] > b[sortConfigConc.key]) return sortConfigConc.direction === 'asc' ? 1 : -1;
+        if (a[sortConc.key] < b[sortConc.key]) return sortConc.direction === 'asc' ? -1 : 1;
+        if (a[sortConc.key] > b[sortConc.key]) return sortConc.direction === 'asc' ? 1 : -1;
         return 0;
       })
     : [...conciergeRequests].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-
-  const filteredConcierge = sortedConc.filter(row => {
-    const term = searchTermConc.toLowerCase();
-    return (
-      row.name.toLowerCase().includes(term) ||
-      row.email.toLowerCase().includes(term) ||
-      (row.request && row.request.toLowerCase().includes(term))
-    );
+  const filteredConc = sortedConc.filter(row => {
+    const t = searchConc.toLowerCase();
+    return Object.values(row).some(val => val && val.toString().toLowerCase().includes(t));
   });
 
-  // ===== Login & CSV =====
+  // ===== Login =====
   const handleLogin = async e => {
     e.preventDefault();
-    setLoading(true
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin-get-submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (res.ok) {
+        setSubmissions(data.submissions);
+        setAuthed(true);
+        const resConc = await fetch('/api/admin-get-concierge-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const concData = await resConc.json();
+        if (resConc.ok) setConciergeRequests(concData.requests);
+      } else {
+        setError(data.error || 'Login failed');
+      }
+    } catch {
+      setError('Server error. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  // ===== CSV Downloader =====
+  const downloadCSV = async (url, filename) => {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    } catch {
+      alert('Error downloading CSV');
+    }
+  };
+
+  if (!authed) {
+    return (
+      <div style={container}>
+        <form onSubmit={handleLogin} style={{ maxWidth: 400, margin: 'auto' }}>
+          <h2>Admin Login</h2>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter admin password" style={input} />
+          <button type="submit" style={button}>
+            {loading ? 'Loading...' : 'Login'}
+          </button>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+        </form>
+      </div>
+    );
+  }
+
+  // ===== Render Table with Search & Clear =====
+  const renderSearch = (value, setter) => (
+    <div style={{ margin: '1rem 0', display: 'flex', gap: '0.5rem' }}>
+      <input type="text" value={value} onChange={e => setter(e.target.value)} style={searchBox} />
+      <button onClick={() => setter('')} style={clearBtn}>✕ Clear</button>
+    </div>
+  );
+
+  const renderTable = (rows, highlightTerm, sortConfig, sortHandler, sortKeys) => (
+    <table style={tableStyle}>
+      <thead>
+        <tr>
+          {sortKeys.map(col => (
+            <th key={col} style={th} onClick={() => cycleSort(sortConfig, sortHandler, col)}>
+              {col}{getSortIcon(sortConfig, col)}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, idx) => (
+          <tr key={idx}>
+            {sortKeys.map(col => (
+              <td key={col} style={td}>
+                {highlightMatch(row[col], highlightTerm)}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  return (
+    <div style={container}>
+      {/* All Leads */}
+      <h2>
+        All Leads (Combined){' '}
+        <button onClick={() => downloadCSV('/api/admin-export-combined', 'all_leads.csv')} style={btnRed}>
+          Download Combined CSV
+        </button>
+      </h2>
+      {renderSearch(searchCombined, setSearchCombined)}
+      {renderTable(filteredCombined, searchCombined, sortCombined, setSortCombined, ['source','name','email','phone','occupation','country','message','request','submitted_at'])}
+
+      {/* Applications */}
+      <h2>
+        Applications{' '}
+        <button onClick={() => downloadCSV('/api/admin-export-csv', 'applications.csv')} style={btnBlue}>
+          Download Applications CSV
+        </button>
+      </h2>
+      {renderSearch(searchApps, setSearchApps)}
+      {renderTable(filteredApps, searchApps, sortApps, setSortApps, ['name','email','phone','occupation','country','message','submitted_at'])}
+
+      {/* Concierge */}
+      <h2>
+        Concierge Requests{' '}
+        <button onClick={() => downloadCSV('/api/admin-export-concierge', 'concierge_requests.csv')} style={btnBlue}>
+          Download Concierge CSV
+        </button>
+      </h2>
+      {renderSearch(searchConc, setSearchConc)}
+      {renderTable(filteredConc, searchConc, sortConc, setSortConc, ['name','email','request','submitted_at'])}
+    </div>
+  );
+}
+
+// ===== Styles =====
+const container = { padding: '2rem', color: 'white', background: 'black', minHeight: '100vh' };
+const tableStyle = { width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' };
+const th = { borderBottom: '1px solid #555', padding: '8px', background: '#111', cursor: 'pointer' };
+const td = {
