@@ -194,7 +194,7 @@ export default function AdminPage() {
             cursor: 'pointer'
           }}
         >
-          Download CSV
+          Download Applications CSV
         </button>
         <button
           onClick={downloadConciergeCSV}
