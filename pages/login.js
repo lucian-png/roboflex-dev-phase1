@@ -21,7 +21,13 @@ export default function LoginPage() {
       // Sign up new user
       const { error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_SITE_URL
+              ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirmed`
+              : 'https://dev.roboflex.co/auth/confirmed'
+        }
       });
       authError = error;
     } else {
