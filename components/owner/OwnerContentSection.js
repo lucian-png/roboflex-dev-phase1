@@ -1,3 +1,5 @@
+import ConciergeForm from './ConciergeForm';
+
 export default function OwnerContentSection() {
   return (
     <section style={{
@@ -7,13 +9,12 @@ export default function OwnerContentSection() {
     }}>
       <h3>Owner Resources</h3>
       <ul style={{ lineHeight: 1.8 }}>
-        <li>📅 Concierge booking form (placeholder)</li>
+        <li>📅 Concierge booking form</li>
         <li>📄 Download exclusive technical manuals (placeholder)</li>
         <li>📰 Private owner updates (placeholder)</li>
       </ul>
-      <p style={{ marginTop: '1rem' }}>
-        [Placeholder] These resources will be available only to authenticated owners.
-      </p>
+
+      <ConciergeForm /> {/* ✅ Form inside the owner portal */}
     </section>
   );
 }
