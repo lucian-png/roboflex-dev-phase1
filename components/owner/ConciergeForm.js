@@ -1,117 +1,94 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import theme from '../styles/theme';
 
 export default function ConciergeForm() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    request: ''
-  });
+  const [request, setRequest] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-
-  const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess(false);
+    setSuccess('');
 
-    try {
-      const res = await fetch('/api/concierge-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        setSuccess(true);
-        setFormData({ name: '', email: '', request: '' });
-      } else {
-        setError(data.error || 'Failed to send request');
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Server error. Please try again.');
-    } finally {
+    // Get logged-in user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      setError('You must be logged in to submit a request.');
       setLoading(false);
+      return;
     }
+
+    // Insert concierge request tied to this user's Auth UUID
+    const { error: insertError } = await supabase
+      .from('concierge_requests')
+      .insert([{
+        id: user.id,                 // this is your linking column
+        email: user.email,           // store email for reference
+        request,                     // the request text
+        submitted_at: new Date().toISOString() // optional if DB not already defaulting
+      }]);
+
+    if (insertError) {
+      setError(insertError.message);
+    } else {
+      setSuccess('✅ Your concierge request has been submitted.');
+      setRequest('');
+    }
+
+    setLoading(false);
   };
 
-  if (success) {
-    return (
-      <div style={{ marginTop: '1rem', color: 'green' }}>
-        ✅ Your concierge request has been submitted successfully!
-      </div>
-    );
-  }
-
   return (
-    <form 
-      onSubmit={handleSubmit} 
-      style={{ 
-        background: '#000', 
-        padding: '1.5rem', 
-        color: 'white', 
-        maxWidth: 500, 
-        margin: '2rem auto', 
-        borderRadius: '4px'
-      }}
-    >
-      <h3>Concierge Request Form</h3>
-      <label>
-        Name:<br />
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
-        />
-      </label>
+    <form onSubmit={handleSubmit} style={formStyle}>
+      <label>Concierge Request</label>
+      <textarea
+        value={request}
+        onChange={(e) => setRequest(e.target.value)}
+        required
+        style={textareaStyle}
+      />
 
-      <label>
-        Email:<br />
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
-        />
-      </label>
+      {error && <p style={{ color: theme.colors.error }}>{error}</p>}
+      {success && <p style={{ color: 'lightgreen' }}>{success}</p>}
 
-      <label>
-        Request Details:<br />
-        <textarea
-          name="request"
-          rows="4"
-          value={formData.request}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
-        ></textarea>
-      </label>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <button 
-        type="submit"
-        disabled={loading}
-        style={{ padding: '0.75rem 1.5rem', fontWeight: 'bold', cursor: 'pointer' }}
-      >
-        {loading ? 'Sending...' : 'Submit Request'}
+      <button type="submit" disabled={loading} style={buttonStyle}>
+        {loading ? 'Submitting...' : 'Submit Request'}
       </button>
     </form>
   );
 }
+
+// ===== Themed Styles =====
+const formStyle = {
+  background: theme.colors.cardBackground,
+  padding: theme.spacing.padding,
+  borderRadius: theme.spacing.borderRadius,
+  boxShadow: theme.shadows.card,
+  marginBottom: '2rem' // space before the table
+};
+
+const textareaStyle = {
+  width: '100%',
+  minHeight: '100px',
+  marginBottom: '1rem',
+  borderRadius: '4px',
+  border: `1px solid ${theme.colors.border}`,
+  background: theme.colors.inputBackground,
+  color: theme.colors.text,
+  padding: '0.5rem',
+  fontFamily: 'inherit',
+  fontSize: theme.typography.textSize
+};
+
+const buttonStyle = {
+  background: theme.colors.primary,
+  color: theme.colors.text,
+  border: 'none',
+  padding: '0.75rem 1.5rem',
+  cursor: 'pointer',
+  borderRadius: '4px'
+};

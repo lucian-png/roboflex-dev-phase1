@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
+import AuthFormLayout from '../components/layout/AuthFormLayout';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -8,7 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false); // toggle between login/signup
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -18,7 +19,6 @@ export default function LoginPage() {
     let authError = null;
 
     if (isSignUp) {
-      // Sign up new user
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -27,21 +27,23 @@ export default function LoginPage() {
         }
       });
       authError = error;
-    } else {
-      // Login existing user
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      authError = error;
+      setLoading(false);
+
+      if (authError) {
+        setError(authError.message);
+      } else {
+        router.push(`/signup-confirmation?email=${encodeURIComponent(email)}`);
+      }
+      return;
     }
 
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    authError = error;
     setLoading(false);
 
     if (authError) {
       setError(authError.message);
     } else {
-      // After signup/login, redirect based on role if available
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
@@ -50,41 +52,16 @@ export default function LoginPage() {
           .eq('id', user.id)
           .single();
 
-        if (profile?.role === 'admin') {
-          router.push('/admin');
-        } else if (profile?.role === 'owner') {
-          router.push('/owner');
-        } else {
-          router.push('/');
-        }
+        if (profile?.role === 'admin') router.push('/admin');
+        else if (profile?.role === 'owner') router.push('/owner');
+        else router.push('/');
       }
     }
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      background: '#111',
-      color: 'white'
-    }}>
-      <form
-        onSubmit={handleAuth}
-        style={{
-          background: '#1e1e1e',
-          padding: '2rem',
-          borderRadius: '8px',
-          boxShadow: '0 0 10px rgba(0,0,0,0.3)',
-          width: '100%',
-          maxWidth: '400px'
-        }}
-      >
-        <h2 style={{ marginBottom: '1rem', textAlign: 'center' }}>
-          {isSignUp ? 'Sign Up' : 'Login'}
-        </h2>
-
+    <AuthFormLayout title={isSignUp ? 'Sign Up' : 'Login'}>
+      <form onSubmit={handleAuth}>
         <label>Email</label>
         <input
           type="email"
@@ -105,33 +82,32 @@ export default function LoginPage() {
 
         {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: '#0066cc',
-            color: 'white',
-            border: 'none',
-            padding: '0.75rem',
-            cursor: 'pointer',
-            width: '100%',
-            marginTop: '1rem'
-          }}
-        >
-          {loading ? (isSignUp ? 'Signing up...' : 'Logging in...') : (isSignUp ? 'Sign Up' : 'Login')}
+        <button type="submit" disabled={loading} style={buttonStyle}>
+          {loading
+            ? (isSignUp ? 'Signing up...' : 'Logging in...')
+            : (isSignUp ? 'Sign Up' : 'Login')}
         </button>
+
+        {!isSignUp && (
+          <p
+            style={linkStyle}
+            onClick={() => router.push('/reset-password')}
+          >
+            Forgot your password?
+          </p>
+        )}
 
         <p style={{ marginTop: '1rem', textAlign: 'center' }}>
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <span
             onClick={() => setIsSignUp(!isSignUp)}
-            style={{ color: '#00aaff', cursor: 'pointer', textDecoration: 'underline' }}
+            style={toggleLinkStyle}
           >
             {isSignUp ? 'Login here' : 'Sign up here'}
           </span>
         </p>
       </form>
-    </div>
+    </AuthFormLayout>
   );
 }
 
@@ -143,4 +119,29 @@ const inputStyle = {
   border: '1px solid #444',
   background: '#222',
   color: 'white'
+};
+
+const buttonStyle = {
+  background: '#0066cc',
+  color: 'white',
+  border: 'none',
+  padding: '0.75rem',
+  cursor: 'pointer',
+  width: '100%',
+  marginTop: '1rem'
+};
+
+const linkStyle = {
+  fontSize: '0.9rem',
+  textAlign: 'right',
+  margin: '0.5rem 0 0',
+  color: '#00aaff',
+  cursor: 'pointer',
+  textDecoration: 'underline'
+};
+
+const toggleLinkStyle = {
+  color: '#00aaff',
+  cursor: 'pointer',
+  textDecoration: 'underline'
 };
