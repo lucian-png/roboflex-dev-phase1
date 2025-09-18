@@ -68,6 +68,8 @@ export default function AdminPageComponent() {
             'submitted_at'
           ]}
           rows={combinedLeads}
+          defaultSortKey="submitted_at"
+          defaultSortDirection="desc"
         />
       </Section>
 
@@ -84,6 +86,8 @@ export default function AdminPageComponent() {
             'submitted_at'
           ]}
           rows={submissions}
+          defaultSortKey="submitted_at"
+          defaultSortDirection="desc"
         />
       </Section>
 
@@ -92,6 +96,8 @@ export default function AdminPageComponent() {
         <DataTable
           columns={['name', 'email', 'request', 'submitted_at']}
           rows={conciergeRequests}
+          defaultSortKey="submitted_at"
+          defaultSortDirection="desc"
         />
       </Section>
     </div>
@@ -118,8 +124,11 @@ function Section({ title, children }) {
 }
 
 // ===== Reusable DataTable Component with Sorting =====
-function DataTable({ columns, rows }) {
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+function DataTable({ columns, rows, defaultSortKey = null, defaultSortDirection = null }) {
+  const [sortConfig, setSortConfig] = useState({
+    key: defaultSortKey,
+    direction: defaultSortDirection
+  });
 
   const cycleSort = (key) => {
     if (sortConfig.key === key) {
@@ -202,11 +211,7 @@ function DataTable({ columns, rows }) {
 // ===== Helpers =====
 function formatCell(value) {
   if (!value) return '';
-  if (
-    typeof value === 'string' &&
-    Date.parse(value) &&
-    value.includes('T')
-  ) {
+  if (typeof value === 'string' && Date.parse(value) && value.includes('T')) {
     return new Date(value).toLocaleString();
   }
   return value;
