@@ -56,7 +56,17 @@ export default function AdminPageComponent() {
       {/* Combined Table */}
       <Section title="All Leads (Combined)">
         <DataTable
-          columns={['source', 'name', 'email', 'phone', 'occupation', 'country', 'message', 'request', 'submitted_at']}
+          columns={[
+            'source',
+            'name',
+            'email',
+            'phone',
+            'occupation',
+            'country',
+            'message',
+            'request',
+            'submitted_at'
+          ]}
           rows={combinedLeads}
         />
       </Section>
@@ -64,7 +74,15 @@ export default function AdminPageComponent() {
       {/* Applications Table */}
       <Section title="Applications">
         <DataTable
-          columns={['name', 'email', 'phone', 'occupation', 'country', 'message', 'submitted_at']}
+          columns={[
+            'name',
+            'email',
+            'phone',
+            'occupation',
+            'country',
+            'message',
+            'submitted_at'
+          ]}
           rows={submissions}
         />
       </Section>
@@ -84,12 +102,14 @@ export default function AdminPageComponent() {
 function Section({ title, children }) {
   return (
     <section style={{ marginBottom: '2.5rem' }}>
-      <h3 style={{
-        fontSize: theme.typography.textSize,
-        marginBottom: '0.75rem',
-        borderBottom: `2px solid ${theme.colors.primary}`,
-        paddingBottom: '0.25rem'
-      }}>
+      <h3
+        style={{
+          fontSize: theme.typography.textSize,
+          marginBottom: '0.75rem',
+          borderBottom: `2px solid ${theme.colors.primary}`,
+          paddingBottom: '0.25rem'
+        }}
+      >
         {title}
       </h3>
       {children}
@@ -97,24 +117,63 @@ function Section({ title, children }) {
   );
 }
 
-// ===== Reusable DataTable Component =====
+// ===== Reusable DataTable Component with Sorting =====
 function DataTable({ columns, rows }) {
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+
+  const cycleSort = (key) => {
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === null) {
+        setSortConfig({ key, direction: 'asc' });
+      } else if (sortConfig.direction === 'asc') {
+        setSortConfig({ key, direction: 'desc' });
+      } else {
+        setSortConfig({ key: null, direction: null });
+      }
+    } else {
+      setSortConfig({ key, direction: 'asc' });
+    }
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key || sortConfig.direction === null) {
+      return <span style={{ color: '#aaa' }}> ↕</span>;
+    }
+    return sortConfig.direction === 'asc'
+      ? <span style={{ color: '#FFD700' }}> ▲</span>
+      : <span style={{ color: '#FFD700' }}> ▼</span>;
+  };
+
+  const sortedRows = sortConfig.key
+    ? [...rows].sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key])
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        if (a[sortConfig.key] > b[sortConfig.key])
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      })
+    : rows;
+
   return (
     <table style={tableStyle}>
       <thead>
         <tr>
-          {columns.map(col => (
-            <th key={col} style={thStyle}>
-              {col}
+          {columns.map((col) => (
+            <th
+              key={col}
+              style={{ ...thStyle, cursor: 'pointer' }}
+              onClick={() => cycleSort(col)}
+            >
+              {col} {getSortIcon(col)}
             </th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {rows.length > 0 ? (
-          rows.map((row, idx) => (
+        {sortedRows.length > 0 ? (
+          sortedRows.map((row, idx) => (
             <tr key={idx}>
-              {columns.map(col => (
+              {columns.map((col) => (
                 <td key={col} style={tdStyle}>
                   {formatCell(row[col])}
                 </td>
@@ -123,7 +182,14 @@ function DataTable({ columns, rows }) {
           ))
         ) : (
           <tr>
-            <td colSpan={columns.length} style={{ ...tdStyle, textAlign: 'center', color: theme.colors.textLight }}>
+            <td
+              colSpan={columns.length}
+              style={{
+                ...tdStyle,
+                textAlign: 'center',
+                color: theme.colors.textLight
+              }}
+            >
               No records found
             </td>
           </tr>
@@ -136,7 +202,11 @@ function DataTable({ columns, rows }) {
 // ===== Helpers =====
 function formatCell(value) {
   if (!value) return '';
-  if (typeof value === 'string' && Date.parse(value) && value.includes('T')) {
+  if (
+    typeof value === 'string' &&
+    Date.parse(value) &&
+    value.includes('T')
+  ) {
     return new Date(value).toLocaleString();
   }
   return value;
