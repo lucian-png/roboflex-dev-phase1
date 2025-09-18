@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import AuthFormLayout from '../components/layout/AuthFormLayout';
@@ -7,7 +7,13 @@ export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  // Client-only mount guard to avoid hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -16,14 +22,19 @@ export default function UpdatePasswordPage() {
 
     const { error } = await supabase.auth.updateUser({ password });
 
-    setLoading(false);
-
     if (error) {
       setError(error.message);
+      setLoading(false);
     } else {
-      router.push('/login');
+      setLoading(false);
+      // Defer navigation until after DOM updates
+      setTimeout(() => {
+        router.push('/login');
+      }, 0);
     }
   };
+
+  if (!mounted) return null;
 
   return (
     <AuthFormLayout title="Set New Password">
@@ -37,7 +48,9 @@ export default function UpdatePasswordPage() {
           style={inputStyle}
         />
 
-        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+        {error && (
+          <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>
+        )}
 
         <button type="submit" disabled={loading} style={buttonStyle}>
           {loading ? 'Updating...' : 'Update Password'}
