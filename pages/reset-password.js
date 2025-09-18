@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import AuthFormLayout from '../components/layout/AuthFormLayout';
@@ -7,7 +7,13 @@ export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  // Ensure client-only render to avoid hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleResetRequest = async (e) => {
     e.preventDefault();
@@ -18,14 +24,21 @@ export default function ResetPasswordPage() {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/update-password`
     });
 
-    setLoading(false);
-
     if (error) {
       setError(error.message);
+      setLoading(false);
     } else {
-      router.push(`/reset-confirmation?email=${encodeURIComponent(email)}`);
+      setLoading(false);
+
+      // Defer navigation so React finishes committing DOM updates first
+      setTimeout(() => {
+        router.push(`/reset-confirmation?email=${encodeURIComponent(email)}`);
+      }, 0);
     }
   };
+
+  // Prevent SSR mismatch by rendering nothing until client side is ready
+  if (!mounted) return null;
 
   return (
     <AuthFormLayout title="Reset Password">
@@ -39,7 +52,9 @@ export default function ResetPasswordPage() {
           style={inputStyle}
         />
 
-        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+        {error && (
+          <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>
+        )}
 
         <button type="submit" disabled={loading} style={buttonStyle}>
           {loading ? 'Sending...' : 'Send Reset Link'}
