@@ -39,7 +39,7 @@ export default function AdminPageComponent() {
     return <div style={{ padding: theme.spacing.padding }}>Loading...</div>;
   }
 
-  // Combine both
+  // Combine both for CSV and table
   const combinedLeads = [
     ...(submissions || []).map(r => ({
       source: 'Application',
@@ -51,10 +51,24 @@ export default function AdminPageComponent() {
     }))
   ];
 
+  const downloadCSV = (endpoint, fileName) => {
+    const link = document.createElement('a');
+    link.href = endpoint;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   return (
     <div>
       {/* Combined Table */}
       <Section title="All Leads (Combined)">
+        <DownloadButton
+          onClick={() =>
+            downloadCSV('/api/admin-export-combined', 'combined_leads.csv')
+          }
+        />
         <DataTable
           columns={[
             'source',
@@ -75,6 +89,11 @@ export default function AdminPageComponent() {
 
       {/* Applications Table */}
       <Section title="Applications">
+        <DownloadButton
+          onClick={() =>
+            downloadCSV('/api/admin-export-csv', 'applications.csv')
+          }
+        />
         <DataTable
           columns={[
             'name',
@@ -93,6 +112,11 @@ export default function AdminPageComponent() {
 
       {/* Concierge Requests Table */}
       <Section title="Concierge Requests">
+        <DownloadButton
+          onClick={() =>
+            downloadCSV('/api/admin-export-concierge', 'concierge_requests.csv')
+          }
+        />
         <DataTable
           columns={['name', 'email', 'request', 'submitted_at']}
           rows={conciergeRequests}
@@ -123,8 +147,33 @@ function Section({ title, children }) {
   );
 }
 
+// ===== Download Button Component =====
+function DownloadButton({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        marginBottom: '1rem',
+        background: theme.colors.primary,
+        color: theme.colors.text,
+        border: 'none',
+        padding: '0.5rem 1rem',
+        cursor: 'pointer',
+        borderRadius: theme.spacing.borderRadius
+      }}
+    >
+      ⬇ Download CSV
+    </button>
+  );
+}
+
 // ===== Reusable DataTable Component with Sorting =====
-function DataTable({ columns, rows, defaultSortKey = null, defaultSortDirection = null }) {
+function DataTable({
+  columns,
+  rows,
+  defaultSortKey = null,
+  defaultSortDirection = null
+}) {
   const [sortConfig, setSortConfig] = useState({
     key: defaultSortKey,
     direction: defaultSortDirection
@@ -145,11 +194,10 @@ function DataTable({ columns, rows, defaultSortKey = null, defaultSortDirection 
   };
 
   const getSortIcon = (key) => {
-    // Show gold arrow for default sort as well as active sort
     if (sortConfig.key !== key || sortConfig.direction === null) {
       return <span style={{ color: '#aaa' }}> ↕</span>;
     }
-    const arrowColor = '#FFD700'; // gold
+    const arrowColor = '#FFD700';
     return sortConfig.direction === 'asc'
       ? <span style={{ color: arrowColor }}> ▲</span>
       : <span style={{ color: arrowColor }}> ▼</span>;
@@ -213,7 +261,11 @@ function DataTable({ columns, rows, defaultSortKey = null, defaultSortDirection 
 // ===== Helpers =====
 function formatCell(value) {
   if (!value) return '';
-  if (typeof value === 'string' && Date.parse(value) && value.includes('T')) {
+  if (
+    typeof value === 'string' &&
+    Date.parse(value) &&
+    value.includes('T')
+  ) {
     return new Date(value).toLocaleString();
   }
   return value;
