@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import withRole from '../lib/withRole';
 import Navbar from '../components/layout/Navbar';
 import SEO from '../components/SEO';
@@ -6,6 +7,15 @@ import AdminPageComponent from '../components/AdminPage';
 import theme from '../styles/theme';
 
 function AdminPage() {
+  const [mounted, setMounted] = useState(false);
+
+  // Client-only render guard
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <div style={container}>
       <SEO pageKey="admin" />

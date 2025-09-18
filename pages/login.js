@@ -1,42 +1,51 @@
-import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import AuthFormLayout from '../components/layout/AuthFormLayout';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+const router = useRouter();
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState('');
+const [isSignUp, setIsSignUp] = useState(false);
+const [mounted, setMounted] = useState(false);
 
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+// Client-only guard to prevent hydration mismatches useEffect(() => {
+setMounted(true);
+}, []);
 
-    let authError = null;
+const handleAuth = async (e) => {
+e.preventDefault();
+setLoading(true);
+setError('');
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirmed`
-        }
-      });
-      authError = error;
-      setLoading(false);
+let authError = null;
 
-      if (authError) {
-        setError(authError.message);
-      } else {
-        router.push(`/signup-confirmation?email=${encodeURIComponent(email)}`);
-      }
-      return;
-    }
+if (isSignUp) {
+// --- SIGN UP ---
+const { error } = await supabase.auth.signUp({
+email,
+password,
+options: {
+emailRedirectTo: ${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirmed
+}
+});
+authError = error;
+setLoading(false);
 
+if (authError) {
+setError(authError.message);
+} else {
+// Delay navigation to allow DOM to update setTimeout(() => {
+router.push(/signup-confirmation?email=${encodeURIComponent(email)});
+},0);
+}
+return;
+}
+
+// --- LOGIN ---
+    // --- LOGIN ---
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     authError = error;
     setLoading(false);
@@ -52,12 +61,21 @@ export default function LoginPage() {
           .eq('id', user.id)
           .single();
 
-        if (profile?.role === 'admin') router.push('/admin');
-        else if (profile?.role === 'owner') router.push('/owner');
-        else router.push('/');
+        // Delay navigation so state updates are committed first
+        setTimeout(() => {
+          if (profile?.role === 'admin') {
+            router.push('/admin');
+          } else if (profile?.role === 'owner') {
+            router.push('/owner');
+          } else {
+            router.push('/');
+          }
+        }, 0);
       }
     }
   };
+
+  if (!mounted) return null; // Prevent SSR hydration mismatch
 
   return (
     <AuthFormLayout title={isSignUp ? 'Sign Up' : 'Login'}>
@@ -80,7 +98,9 @@ export default function LoginPage() {
           style={inputStyle}
         />
 
-        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+        {error && (
+          <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>
+        )}
 
         <button type="submit" disabled={loading} style={buttonStyle}>
           {loading
@@ -111,6 +131,7 @@ export default function LoginPage() {
   );
 }
 
+// ===== Styles =====
 const inputStyle = {
   width: '100%',
   padding: '0.5rem',

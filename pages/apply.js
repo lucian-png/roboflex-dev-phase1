@@ -1,9 +1,19 @@
+import { useEffect, useState } from 'react';
 import SEO from '../components/SEO';
 import NavbarMinimal from '../components/layout/NavbarMinimal';
 import FooterMinimal from '../components/layout/FooterMinimal';
 import ApplicationForm from '../components/forms/ApplicationForm';
 
 export default function ApplicationPage() {
+  const [mounted, setMounted] = useState(false);
+
+  // Client-only render guard
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <>
       <SEO pageKey="application" />

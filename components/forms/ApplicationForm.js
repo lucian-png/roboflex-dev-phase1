@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 export default function ApplicationForm() {
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false); // mount guard for SSR safety
   const [step, setStep] = useState(1);
 
   const [formData, setFormData] = useState({
@@ -15,6 +18,10 @@ export default function ApplicationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -47,6 +54,12 @@ export default function ApplicationForm() {
           country: '',
           message: ''
         });
+
+        // OPTIONAL: redirect after short delay
+        // setTimeout(() => {
+        //   router.push('/thank-you'); 
+        // }, 1500);
+
       } else {
         throw new Error(data.error || 'Unknown error occurred');
       }
@@ -58,86 +71,47 @@ export default function ApplicationForm() {
     }
   };
 
+  if (!mounted) return null; // Prevent SSR/CSR mismatches
+
   const renderStep = () => {
     switch (step) {
-// ... inside renderStep()
-  case 1:
-    return (
-      <>
-        <label>
-          Full Name:<br />
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <label>
-          Email:<br />
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <label>
-          Phone:<br />
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            required
-          />
-        </label>
-      </>
-    );
-    
-case 2:
-  return (
-    <>
-      <label>
-        Occupation:<br />
-        <input
-          type="text"
-          name="occupation"
-          value={formData.occupation}
-          onChange={handleChange}
-          required
-        />
-      </label>
-      <label>
-        Country:<br />
-        <input
-          type="text"
-          name="country"
-          value={formData.country}
-          onChange={handleChange}
-          required
-        />
-      </label>
-    </>
-  );
+      case 1:
+        return (
+          <>
+            <label>
+              Full Name:<br />
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <label>
+              Email:<br />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <label>
+              Phone:<br />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </>
+        );
 
-case 3:
-  return (
-    <>
-      <label>
-        Your Message:<br />
-        <textarea
-          name="message"
-          rows="4"
-          value={formData.message}
-          onChange={handleChange}
-          required
-        />
-      </label>
-    </>
-  );      case 2:
+      case 2:
         return (
           <>
             <label>
@@ -147,6 +121,7 @@ case 3:
                 name="occupation"
                 value={formData.occupation}
                 onChange={handleChange}
+                required
               />
             </label>
             <label>
@@ -156,10 +131,12 @@ case 3:
                 name="country"
                 value={formData.country}
                 onChange={handleChange}
+                required
               />
             </label>
           </>
         );
+
       case 3:
         return (
           <>
@@ -170,10 +147,12 @@ case 3:
                 rows="4"
                 value={formData.message}
                 onChange={handleChange}
+                required
               />
             </label>
           </>
         );
+
       default:
         return null;
     }
@@ -215,6 +194,7 @@ case 3:
             Back
           </button>
         )}
+
         {step < 3 && (
           <button
             type="button"
@@ -224,6 +204,7 @@ case 3:
             Next
           </button>
         )}
+
         {step === 3 && (
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit'}
