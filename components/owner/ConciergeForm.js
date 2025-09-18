@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import theme from '../styles/theme';
+import { supabase } from '../../lib/supabaseClient';
+import theme from '../../styles/theme';
 
-export default function ConciergeForm() {
+export default function ConciergeRequestForm(props) {
   const [request, setRequest] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,12 +25,14 @@ export default function ConciergeForm() {
     // Insert concierge request tied to this user's Auth UUID
     const { error: insertError } = await supabase
       .from('concierge_requests')
-      .insert([{
-        id: user.id,                 // this is your linking column
-        email: user.email,           // store email for reference
-        request,                     // the request text
-        submitted_at: new Date().toISOString() // optional if DB not already defaulting
-      }]);
+      .insert([
+        {
+          user_id: user.id,                 // Now the FK to auth.users
+          email: user.email,
+          name: user.user_metadata?.name || '',
+          request                           // DB will auto-fill id + submitted_at
+        }
+    ]);
 
     if (insertError) {
       setError(insertError.message);

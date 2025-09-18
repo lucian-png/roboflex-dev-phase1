@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from '../../lib/supabaseClient'; // ✅ Needed to get session
 
 export default function ApplicationForm() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false); // mount guard for SSR safety
+  const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState(1);
 
   const [formData, setFormData] = useState({
@@ -36,10 +37,20 @@ export default function ApplicationForm() {
     setError('');
 
     try {
+      // 🎯 Get the logged-in user's access token
+      const { data: { session } } = await supabase.auth.getSession();
+      const access_token = session?.access_token;
+
+      if (!access_token) {
+        setError('You must be logged in to submit.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const res = await fetch('/api/submit-application', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, access_token })
       });
 
       const data = await res.json();
@@ -55,11 +66,8 @@ export default function ApplicationForm() {
           message: ''
         });
 
-        // OPTIONAL: redirect after short delay
-        // setTimeout(() => {
-        //   router.push('/thank-you'); 
-        // }, 1500);
-
+        // OPTIONAL auto-redirect
+        // setTimeout(() => router.push('/thank-you'), 1500);
       } else {
         throw new Error(data.error || 'Unknown error occurred');
       }
@@ -71,88 +79,43 @@ export default function ApplicationForm() {
     }
   };
 
-  if (!mounted) return null; // Prevent SSR/CSR mismatches
+  if (!mounted) return null; // prevent hydration errors
 
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
           <>
-            <label>
-              Full Name:<br />
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
+            <label>Full Name:<br />
+              <input type="text" name="name" value={formData.name} onChange={handleChange} required />
             </label>
-            <label>
-              Email:<br />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
+            <label>Email:<br />
+              <input type="email" name="email" value={formData.email} onChange={handleChange} required />
             </label>
-            <label>
-              Phone:<br />
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-              />
+            <label>Phone:<br />
+              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required />
             </label>
           </>
         );
-
       case 2:
         return (
           <>
-            <label>
-              Occupation:<br />
-              <input
-                type="text"
-                name="occupation"
-                value={formData.occupation}
-                onChange={handleChange}
-                required
-              />
+            <label>Occupation:<br />
+              <input type="text" name="occupation" value={formData.occupation} onChange={handleChange} required />
             </label>
-            <label>
-              Country:<br />
-              <input
-                type="text"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-                required
-              />
+            <label>Country:<br />
+              <input type="text" name="country" value={formData.country} onChange={handleChange} required />
             </label>
           </>
         );
-
       case 3:
         return (
           <>
-            <label>
-              Your Message:<br />
-              <textarea
-                name="message"
-                rows="4"
-                value={formData.message}
-                onChange={handleChange}
-                required
-              />
+            <label>Your Message:<br />
+              <textarea name="message" rows="4" value={formData.message} onChange={handleChange} required />
             </label>
           </>
         );
-
       default:
         return null;
     }
@@ -168,43 +131,24 @@ export default function ApplicationForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        maxWidth: '400px',
-        marginTop: '2rem',
-        gap: '1rem'
-      }}
-    >
+    <form onSubmit={handleSubmit} style={{
+      display: 'flex',
+      flexDirection: 'column',
+      maxWidth: '400px',
+      marginTop: '2rem',
+      gap: '1rem'
+    }}>
       {renderStep()}
 
-      {error && (
-        <div style={{ color: 'red' }}>❌ {error}</div>
-      )}
+      {error && <div style={{ color: 'red' }}>❌ {error}</div>}
 
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         {step > 1 && (
-          <button
-            type="button"
-            onClick={() => setStep((prev) => prev - 1)}
-            disabled={isSubmitting}
-          >
-            Back
-          </button>
+          <button type="button" onClick={() => setStep((prev) => prev - 1)} disabled={isSubmitting}>Back</button>
         )}
-
         {step < 3 && (
-          <button
-            type="button"
-            onClick={() => setStep((prev) => prev + 1)}
-            disabled={isSubmitting}
-          >
-            Next
-          </button>
+          <button type="button" onClick={() => setStep((prev) => prev + 1)} disabled={isSubmitting}>Next</button>
         )}
-
         {step === 3 && (
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit'}

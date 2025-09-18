@@ -2,38 +2,47 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE
+  process.env.SUPABASE_SERVICE_ROLE // Service role to bypass RLS for writing
 );
 
 export default async function handler(req, res) {
-  console.log("Incoming request body:", req.body);
   console.log("=== API ROUTE CALLED ===");
-  console.log("HTTP Method:", req.method);
-  console.log("Supabase URL:", process.env.SUPABASE_URL);
-  console.log("Service Role key length:", process.env.SUPABASE_SERVICE_ROLE?.length);
-
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, phone, occupation, country, message } = req.body;
+  const { name, email, phone, occupation, country, message, access_token } = req.body;
 
-  // ✅ Server-side validation: all fields required
+  // Validation
   if (!name || !email || !phone || !occupation || !country || !message) {
-    console.log("Validation failed — missing fields");
     return res.status(400).json({ error: 'All fields are required' });
   }
 
+  // Get the user making the request
+  const { data: { user }, error: userError } = await supabase.auth.getUser(access_token);
+
+  if (userError || !user) {
+    console.error("Auth error:", userError);
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  // Insert with FK user_id
   const { data, error } = await supabase
     .from('applications')
-    .insert([
-      { name, email, phone, occupation, country, message }
-    ])
+    .insert([{
+      user_id: user.id, // FK to auth.users
+      name,
+      email,
+      phone,
+      occupation,
+      country,
+      message
+    }])
     .select();
 
-  console.log("Insert result:", { data, error });
-
   if (error) {
+    console.error("Insert error:", error);
     return res.status(500).json({ error: error.message });
   }
 

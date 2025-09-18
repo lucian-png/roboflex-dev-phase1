@@ -1,36 +1,57 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import theme from '../styles/theme';
+import ConciergeRequestForm from './owner/ConciergeForm';
 
 export default function OwnerPageComponent() {
   const [myRequests, setMyRequests] = useState([]);
+  const [myApplications, setMyApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const tableRef = useRef(null);
-  const [highlightedId, setHighlightedId] = useState(null);
+  const [activeTab, setActiveTab] = useState('concierge');
 
-  // Load logged-in user's concierge requests
+  // Search states
+  const [conciergeSearch, setConciergeSearch] = useState('');
+  const [applicationsSearch, setApplicationsSearch] = useState('');
+
+  // Mount guard
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    const savedTab = localStorage.getItem('ownerDashboardActiveTab');
+    if (savedTab) setActiveTab(savedTab);
+  }, []);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    localStorage.setItem('ownerDashboardActiveTab', tab);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         console.error('No logged-in user found.');
         setLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
+      // Concierge requests
+      const { data: conciergeData } = await supabase
         .from('concierge_requests')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .order('submitted_at', { ascending: false });
+      setMyRequests(conciergeData || []);
 
-      if (error) {
-        console.error(error);
-      } else {
-        setMyRequests(data || []);
-      }
+      // Applications
+      const { data: appData } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('submitted_at', { ascending: false });
+      setMyApplications(appData || []);
 
       setLoading(false);
     };
@@ -38,147 +59,106 @@ export default function OwnerPageComponent() {
     fetchData();
   }, []);
 
-  const handleNewRequest = (newRequest) => {
-    setMyRequests(prev => [newRequest, ...prev]);
-    setHighlightedId(newRequest.submitted_at); // use unique timestamp as identifier
-
-    // Auto-scroll to table
-    tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    // Remove highlight after 3 seconds
-    setTimeout(() => {
-      setHighlightedId(null);
-    }, 3000);
+  const downloadCSV = (rows, fileName, columns) => {
+    const csvHeader = columns.join(',') + '\n';
+    const csvRows = rows.map(row =>
+      columns.map(col => `"${row[col] || ''}"`).join(',')
+    );
+    const blob = new Blob([csvHeader + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
+
+  // Filter rows based on query
+  const filterRows = (rows, query) =>
+    rows.filter(row =>
+      Object.values(row).some(val =>
+        String(val || '').toLowerCase().includes(query.toLowerCase())
+      )
+    );
+
+  const filteredConcierge = filterRows(myRequests, conciergeSearch);
+  const filteredApplications = filterRows(myApplications, applicationsSearch);
+
+  if (!mounted) return null;
+  if (loading) return <div style={{ padding: theme.spacing.padding }}>Loading...</div>;
 
   return (
     <div>
-      {/* Submission Form */}
-      <Section title="Submit a Concierge Request">
-        <ConciergeRequestForm onSuccess={handleNewRequest} />
-      </Section>
+      {/* Tabs */}
+      <div style={tabNavStyle}>
+        <button style={activeTab === 'concierge' ? tabActiveStyle : tabStyle} onClick={() => handleTabChange('concierge')}>
+          Concierge Requests
+        </button>
+        <button style={activeTab === 'applications' ? tabActiveStyle : tabStyle} onClick={() => handleTabChange('applications')}>
+          Applications
+        </button>
+      </div>
 
-      {/* My Requests Table */}
-      <Section title="My Concierge Requests">
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <div ref={tableRef}>
-            <DataTable
-              columns={['name', 'email', 'request', 'submitted_at']}
-              rows={myRequests}
-              highlightedId={highlightedId}
+      {/* Concierge Tab */}
+      {activeTab === 'concierge' && (
+        <>
+          <Section title="Submit a Concierge Request">
+            <ConciergeRequestForm
+              onSuccess={(newRequest) => setMyRequests(prev => [newRequest, ...prev])}
             />
-          </div>
-        )}
-      </Section>
+            <div style={{ marginTop: '1rem' }}>
+              <DownloadButton
+                label="Download My Concierge Requests (CSV)"
+                onClick={() =>
+                  downloadCSV(filteredConcierge, 'my_concierge_requests.csv',
+                    ['name','email','request','submitted_at'])
+                }
+              />
+            </div>
+          </Section>
+
+          <Section title="My Concierge Requests">
+            <SearchBox value={conciergeSearch} onChange={setConciergeSearch} />
+            <DownloadButton
+              onClick={() =>
+                downloadCSV(filteredConcierge, 'my_concierge_requests.csv',
+                  ['name','email','request','submitted_at'])
+              }
+            />
+            <DataTable
+              columns={['name','email','request','submitted_at']}
+              rows={filteredConcierge}
+              defaultSortKey="submitted_at"
+              defaultSortDirection="desc"
+            />
+          </Section>
+        </>
+      )}
+
+      {/* Applications Tab */}
+      {activeTab === 'applications' && (
+        <Section title="My Applications">
+          <SearchBox value={applicationsSearch} onChange={setApplicationsSearch} />
+          <DownloadButton
+            label="Download My Applications (CSV)"
+            onClick={() =>
+              downloadCSV(filteredApplications, 'my_applications.csv',
+                ['name','email','phone','occupation','country','message','submitted_at'])
+            }
+          />
+          <DataTable
+            columns={['name','email','phone','occupation','country','message','submitted_at']}
+            rows={filteredApplications}
+            defaultSortKey="submitted_at"
+            defaultSortDirection="desc"
+          />
+        </Section>
+      )}
     </div>
   );
 }
 
-// ===== Concierge Request Form =====
-function ConciergeRequestForm({ onSuccess }) {
-  const [request, setRequest] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const CHAR_LIMIT = 500;
-
-  const textareaRef = useRef(null);
-  const feedbackRef = useRef(null);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    if (!request.trim()) {
-      setError('Please enter a concierge request.');
-      setLoading(false);
-      feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-
-    if (request.length > CHAR_LIMIT) {
-      setError(`Request must be ${CHAR_LIMIT} characters or fewer.`);
-      setLoading(false);
-      feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      setError('You must be logged in to submit a request.');
-      setLoading(false);
-      feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-
-    const newRecord = {
-      id: user.id,
-      email: user.email,
-      name: user.user_metadata?.name || '',
-      request,
-      submitted_at: new Date().toISOString()
-    };
-
-    const { error: insertError } = await supabase
-      .from('concierge_requests')
-      .insert([newRecord]);
-
-    if (insertError) {
-      setError(insertError.message);
-    } else {
-      setSuccess('✅ Your concierge request has been submitted.');
-      setRequest('');
-      onSuccess && onSuccess(newRecord);
-    }
-
-    setLoading(false);
-    feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} style={formStyle}>
-      <label>Concierge Request</label>
-      <textarea
-        ref={textareaRef}
-        value={request}
-        onChange={(e) => setRequest(e.target.value)}
-        maxLength={CHAR_LIMIT}
-        required
-        style={textareaStyle}
-      />
-
-      <p style={{
-        fontSize: theme.typography.smallTextSize,
-        textAlign: 'right',
-        margin: '-0.5rem 0 1rem',
-        color: request.length > CHAR_LIMIT ? theme.colors.error : theme.colors.textLight
-      }}>
-        {request.length}/{CHAR_LIMIT} characters
-      </p>
-
-      <div ref={feedbackRef}>
-        {error && <p style={{ color: theme.colors.error }}>{error}</p>}
-        {success && <p style={{ color: 'lightgreen' }}>{success}</p>}
-      </div>
-
-      <button type="submit" disabled={loading} style={buttonStyle}>
-        {loading ? 'Submitting...' : 'Submit Request'}
-      </button>
-    </form>
-  );
-}
-
-// ===== Section Wrapper =====
+/* ----- Helpers ----- */
 function Section({ title, children }) {
   return (
     <section style={{ marginBottom: '2.5rem' }}>
@@ -187,51 +167,89 @@ function Section({ title, children }) {
         marginBottom: '0.75rem',
         borderBottom: `2px solid ${theme.colors.primary}`,
         paddingBottom: '0.25rem'
-      }}>
-        {title}
-      </h3>
+      }}>{title}</h3>
       {children}
     </section>
   );
 }
 
-// ===== Data Table =====
-function DataTable({ columns, rows, highlightedId }) {
+function DownloadButton({ onClick, label }) {
+  return <button onClick={onClick} style={downloadBtnStyle}>⬇ {label || 'Download CSV'}</button>;
+}
+
+function SearchBox({ value, onChange }) {
+  return (
+    <div style={searchWrapperStyle}>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={searchInputStyle}
+      />
+      {value && <button onClick={() => onChange('')} style={clearBtnStyle}>✕</button>}
+    </div>
+  );
+}
+
+/* ----- DataTable with Gold Arrows ----- */
+function DataTable({ columns, rows, defaultSortKey = null, defaultSortDirection = null }) {
+  const [sortConfig, setSortConfig] = useState({ key: defaultSortKey, direction: defaultSortDirection });
+
+  const cycleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        if (prev.direction === null) return { key, direction: 'asc' };
+        if (prev.direction === 'asc') return { key, direction: 'desc' };
+        return { key: null, direction: null };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key || !sortConfig.direction) {
+      return <span style={{ color: '#aaa' }}>↕</span>;
+    }
+    return sortConfig.direction === 'asc'
+      ? <span style={{ color: '#FFD700' }}>▲</span>
+      : <span style={{ color: '#FFD700' }}>▼</span>;
+  };
+
+  const sortedRows = sortConfig.key
+    ? [...rows].sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      })
+    : rows;
+
   return (
     <table style={tableStyle}>
       <thead>
         <tr>
           {columns.map(col => (
-            <th key={col} style={thStyle}>
-              {col}
+            <th key={col} style={{ ...thStyle, cursor: 'pointer' }} onClick={() => cycleSort(col)}>
+              {col} {getSortIcon(col)}
             </th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {rows.length > 0 ? (
-          rows.map((row, idx) => {
-            const isHighlighted = highlightedId && row.submitted_at === highlightedId;
-            return (
-              <tr
-                key={idx}
-                style={{
-                  background: isHighlighted ? 'rgba(0, 128, 255, 0.2)' : 'transparent',
-                  transition: 'background 1s ease'
-                }}
-              >
-                {columns.map(col => (
-                  <td key={col} style={tdStyle}>
-                    {formatCell(row[col])}
-                  </td>
-                ))}
-              </tr>
-            );
-          })
+        {sortedRows.length > 0 ? (
+          sortedRows.map((row, idx) => (
+            <tr key={idx}>
+              {columns.map(col => (
+                <td key={col} style={tdStyle}>
+                  {String(row[col] || '')}
+                </td>
+              ))}
+            </tr>
+          ))
         ) : (
           <tr>
             <td colSpan={columns.length} style={{ ...tdStyle, textAlign: 'center', color: theme.colors.textLight }}>
-              No concierge requests yet.
+              No records found
             </td>
           </tr>
         )}
@@ -240,65 +258,14 @@ function DataTable({ columns, rows, highlightedId }) {
   );
 }
 
-function formatCell(value) {
-  if (!value) return '';
-  if (typeof value === 'string' && Date.parse(value) && value.includes('T')) {
-    return new Date(value).toLocaleString();
-  }
-  return value;
-}
-
-// ===== Styles =====
-const formStyle = {
-  background: theme.colors.cardBackground,
-  padding: theme.spacing.padding,
-  borderRadius: theme.spacing.borderRadius,
-  boxShadow: theme.shadows.card,
-  marginBottom: '1.5rem'
-};
-
-const textareaStyle = {
-  width: '100%',
-  minHeight: '100px',
-  marginBottom: '1rem',
-  borderRadius: '4px',
-  border: `1px solid ${theme.colors.border}`,
-  background: theme.colors.inputBackground,
-  color: theme.colors.text,
-  padding: '0.5rem',
-  fontFamily: 'inherit',
-  fontSize: theme.typography.textSize
-};
-
-const buttonStyle = {
-  background: theme.colors.primary,
-  color: theme.colors.text,
-  border: 'none',
-  padding: '0.75rem 1.5rem',
-  cursor: 'pointer',
-  borderRadius: '4px'
-};
-
-const tableStyle = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  background: theme.colors.cardBackground,
-  boxShadow: theme.shadows.card,
-  borderRadius: theme.spacing.borderRadius,
-  overflow: 'hidden'
-};
-
-const thStyle = {
-  borderBottom: `1px solid ${theme.colors.border}`,
-  padding: '0.75rem',
-  background: theme.colors.inputBackground,
-  textAlign: 'left',
-  fontWeight: 'bold',
-  color: theme.colors.text
-};
-
-const tdStyle = {
-  borderBottom: `1px solid ${theme.colors.border}`,
-  padding: '0.75rem',
-  color: theme.colors.text
-};
+/* ----- Styles ----- */
+const searchWrapperStyle = { position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '1rem', width: '100%' };
+const searchInputStyle = { padding: '0.5rem', border: `1px solid ${theme.colors.border}`, borderRadius: '4px', width: '100%', background: theme.colors.inputBackground, color: theme.colors.text };
+const clearBtnStyle = { position: 'absolute', right: '8px', background: 'transparent', border: 'none', color: theme.colors.textLight, fontSize: '1rem', cursor: 'pointer' };
+const downloadBtnStyle = { marginBottom: '1rem', background: theme.colors.primary, color: theme.colors.text, border: 'none', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: theme.spacing.borderRadius };
+const tableStyle = { width: '100%', borderCollapse: 'collapse', background: theme.colors.cardBackground, boxShadow: theme.shadows.card, borderRadius: theme.spacing.borderRadius, overflow: 'hidden' };
+const thStyle = { borderBottom: `1px solid ${theme.colors.border}`, padding: '0.75rem', background: theme.colors.inputBackground, textAlign: 'left', fontWeight: 'bold', color: theme.colors.text };
+const tdStyle = { borderBottom: `1px solid ${theme.colors.border}`, padding: '0.75rem', color: theme.colors.text };
+const tabNavStyle = { display: 'flex', marginBottom: '1rem', borderBottom: `2px solid ${theme.colors.border}` };
+const tabStyle = { flex: 1, padding: '0.75rem', background: 'transparent', color: theme.colors.text, border: 'none', borderBottom: `3px solid transparent`, cursor: 'pointer', fontWeight: 'bold' };
+const tabActiveStyle = { ...tabStyle, borderBottom: `3px solid ${theme.colors.primary}` };
