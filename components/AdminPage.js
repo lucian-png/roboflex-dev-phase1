@@ -145,12 +145,14 @@ function DataTable({ columns, rows, defaultSortKey = null, defaultSortDirection 
   };
 
   const getSortIcon = (key) => {
+    // Show gold arrow for default sort as well as active sort
     if (sortConfig.key !== key || sortConfig.direction === null) {
       return <span style={{ color: '#aaa' }}> ↕</span>;
     }
+    const arrowColor = '#FFD700'; // gold
     return sortConfig.direction === 'asc'
-      ? <span style={{ color: '#FFD700' }}> ▲</span>
-      : <span style={{ color: '#FFD700' }}> ▼</span>;
+      ? <span style={{ color: arrowColor }}> ▲</span>
+      : <span style={{ color: arrowColor }}> ▼</span>;
   };
 
   const sortedRows = sortConfig.key
